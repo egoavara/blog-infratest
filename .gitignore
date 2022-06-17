@@ -1,0 +1,17 @@
+certbot-ssl/aws-mine
+certbot-ssl/etc
+certbot-ssl/lib
+
+gitlab-git/config/gitlab-secrets.json
+gitlab-git/config/initial_root_password
+gitlab-git/config/ssh_host_rsa_key
+gitlab-git/config/ssh_host_rsa_key.pub
+gitlab-git/config/ssh_host_ecdsa_key
+gitlab-git/config/ssh_host_ecdsa_key.pub
+gitlab-git/config/ssh_host_ed25519_key
+gitlab-git/config/ssh_host_ed25519_key.pub
+gitlab-git/config/ssl
+gitlab-git/config/trusted-cert
+
+verdaccio-npm/storage/htpasswd
+verdaccio-npm/storage/data

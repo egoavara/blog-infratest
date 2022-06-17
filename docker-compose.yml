@@ -1,0 +1,85 @@
+version: '3'
+services:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # certbot을 이용한 letsencrypt 인증서 불러오기
+  # 해당 예시는 AWS route53의 access key를 이용한 사례
+  certbot-ssl:
+    container_name: certbot-ssl
+    image: certbot/dns-route53:v1.28.0
+    environment:
+      - AWS_CONFIG_FILE=/aws
+    command: >
+        certonly
+        --non-interactive 
+        --agree-tos
+        -m egoavara@gmail.com
+        --dns-route53
+        --dns-route53-propagation-seconds 30
+        -d chatterq.link
+        -d *.chatterq.link
+    volumes:
+      - ./certbot-ssl/aws-mine:/aws
+      - certbot-etc:/etc/letsencrypt
+      - certbot-lib:/var/lib/letsencrypt
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # 테스트용 서버 0번
+  node-hello:
+    container_name: node-hello
+    image: node:17.9.1-alpine3.15
+    command: node /usr/src/app/index.js
+    volumes:
+      - ./node-hello:/usr/src/app
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # 테스트용 서버 1번
+  node-world:
+    container_name: node-world
+    image: node:17.9.1-alpine3.15
+    command: node /usr/src/app/index.js
+    volumes:
+      - ./node-world:/usr/src/app
+      
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # 사설 git(gitlab-ce 기반) 추가
+  gitlab-git:
+    container_name: gitlab-git
+    image: gitlab/gitlab-ce:15.0.2-ce.0
+    volumes:
+      - ./gitlab-git/config:/etc/gitlab
+      - gitlab-git-logs:/var/log/gitlab
+      - gitlab-git-data:/var/opt/gitlab
+      
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # 사설 npm 추가
+  verdaccio-npm:
+    container_name: verdaccio-npm
+    image: verdaccio/verdaccio:5.12
+    volumes:
+      - ./verdaccio-npm/conf:/verdaccio/conf
+      - ./verdaccio-npm/plugins:/verdaccio/plugins
+      - ./verdaccio-npm/storage:/verdaccio/storage
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # nginx를 이용한 reverse proxy
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: nginx:1.22-alpine
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - certbot-ssl
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-lib:/var/lib/letsencrypt
+      - ./nginx-proxy/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx-proxy/conf.d:/etc/nginx/conf.d
+      - ./nginx-proxy/util.d:/etc/nginx/util.d
+volumes:
+  certbot-etc:
+  certbot-lib:
+  gitlab-git-data:
+  gitlab-git-logs:
+  
